@@ -1,0 +1,17 @@
+{
+  "name": "zarpay/zarpay-php",
+  "description": "Official PHP SDK for the ZarPay payment gateway",
+  "type": "library",
+  "license": "MIT",
+  "keywords": ["zarpay", "payments", "jazzcash", "easypaisa", "pakistan"],
+  "require": {
+    "php": ">=7.4",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ZarPay\\": "src/"
+    }
+  }
+}
