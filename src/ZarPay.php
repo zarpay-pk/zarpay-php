@@ -1,18 +1,8 @@
 <?php
 /**
- * ZarPay PHP SDK
+ * ZarPay PHP SDK v1.0.1
  *
  * Official SDK for integrating with the ZarPay payment gateway.
- *
- * Usage:
- *   $zarpay = new \ZarPay\ZarPay('sk_sandbox_xxxxxxxxxxxxx');
- *
- *   $payment = $zarpay->payments->create([
- *       'merchant_order_id' => 'ORD-123',
- *       'amount' => 1500,
- *       'channel_id' => 1,
- *       'customer_phone' => '03001234567',
- *   ]);
  */
 
 namespace ZarPay;
@@ -41,47 +31,84 @@ class Payments
         $this->client = $client;
     }
 
-    /**
-     * Create a new payment.
-     *
-     * @param array $params {
-     *     @type string $merchant_order_id Your unique order ID (max 100 chars)
-     *     @type float  $amount            Amount in PKR (minimum 100)
-     *     @type int    $channel_id        Channel ID from channels->list()
-     *     @type string $customer_phone    Customer phone (03XXXXXXXXX)
-     *     @type array  $metadata          Optional key-value pairs
-     *     @type string $idempotency_key   Optional idempotency key
-     * }
-     * @return array Payment response
-     * @throws ZarPayAPIError
-     */
+    /** Create a new payment. */
     public function create(array $params): array
     {
         return $this->client->request('POST', '/payments', $params);
     }
 
-    /**
-     * Get a payment by ZarPay ID.
-     *
-     * @param string $zarpayId The ZarPay-assigned ID (ZP_xxx)
-     * @return array Payment response
-     * @throws ZarPayAPIError
-     */
+    /** Get a payment by ZarPay ID. */
     public function get(string $zarpayId): array
     {
         return $this->client->request('GET', '/payments/' . urlencode($zarpayId));
     }
 
-    /**
-     * Get a payment by your merchant order ID.
-     *
-     * @param string $orderId Your merchant_order_id
-     * @return array Payment response
-     * @throws ZarPayAPIError
-     */
+    /** Get a payment by your merchant order ID. */
     public function getByOrderId(string $orderId): array
     {
         return $this->client->request('GET', '/payments/by-order/' . urlencode($orderId));
+    }
+}
+
+class Refunds
+{
+    private ZarPay $client;
+
+    public function __construct(ZarPay $client)
+    {
+        $this->client = $client;
+    }
+
+    /**
+     * Initiate a refund on a completed payment.
+     *
+     * @param array $params {
+     *     @type string $zarpay_id  ZarPay payment ID to refund
+     *     @type float  $amount     Refund amount in PKR
+     *     @type string $reason     Optional reason
+     * }
+     */
+    public function create(array $params): array
+    {
+        return $this->client->request('POST', '/refunds', $params);
+    }
+}
+
+class Balance
+{
+    private ZarPay $client;
+
+    public function __construct(ZarPay $client)
+    {
+        $this->client = $client;
+    }
+
+    /** Get the project's financial balance summary. */
+    public function get(): array
+    {
+        return $this->client->request('GET', '/balance');
+    }
+}
+
+class Settlements
+{
+    private ZarPay $client;
+
+    public function __construct(ZarPay $client)
+    {
+        $this->client = $client;
+    }
+
+    /**
+     * List settlements for the project.
+     *
+     * @param array $params Optional: status, page, limit
+     */
+    public function list(array $params = []): array
+    {
+        $query = http_build_query(array_filter($params));
+        $path = '/settlements' . ($query ? "?{$query}" : '');
+        return $this->client->request('GET', $path);
     }
 }
 
@@ -94,12 +121,7 @@ class Channels
         $this->client = $client;
     }
 
-    /**
-     * List available payment channels.
-     *
-     * @return array Channels response
-     * @throws ZarPayAPIError
-     */
+    /** List available payment channels. */
     public function list(): array
     {
         return $this->client->request('GET', '/channels');
@@ -113,17 +135,15 @@ class ZarPay
     private int $timeout;
 
     public Payments $payments;
+    public Refunds $refunds;
+    public Balance $balance;
+    public Settlements $settlements;
     public Channels $channels;
 
     private const DEFAULT_BASE_URL = 'https://zarpay.pk/api/v1';
     private const DEFAULT_TIMEOUT = 120;
+    private const SDK_VERSION = '1.0.1';
 
-    /**
-     * Create a new ZarPay client.
-     *
-     * @param string $apiKey  Your ZarPay API key
-     * @param array  $config  Optional config overrides: base_url, timeout
-     */
     public function __construct(string $apiKey, array $config = [])
     {
         if (empty($apiKey)) {
@@ -135,12 +155,13 @@ class ZarPay
         $this->timeout = $config['timeout'] ?? self::DEFAULT_TIMEOUT;
 
         $this->payments = new Payments($this);
+        $this->refunds = new Refunds($this);
+        $this->balance = new Balance($this);
+        $this->settlements = new Settlements($this);
         $this->channels = new Channels($this);
     }
 
-    /**
-     * @internal Make an API request.
-     */
+    /** @internal */
     public function request(string $method, string $path, ?array $body = null): array
     {
         $url = $this->baseUrl . $path;
@@ -153,7 +174,7 @@ class ZarPay
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
-                'User-Agent: zarpay-php/1.0.0',
+                'User-Agent: zarpay-php/' . self::SDK_VERSION,
             ],
         ]);
 
