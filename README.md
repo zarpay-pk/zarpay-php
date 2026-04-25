@@ -24,6 +24,7 @@ $payment = $zarpay->payments->create([
 ]);
 
 echo $payment['data']['status'];
+echo $payment['data']['payment_method_label'];
 ```
 
 ## Payments
@@ -89,7 +90,8 @@ foreach ($settlements['data']['settlements'] as $s) {
 $channels = $zarpay->channels->list();
 
 foreach ($channels['data']['channels'] as $ch) {
-    echo "{$ch['id']}: {$ch['wallet_type']}\n";
+    echo "{$ch['id']}: {$ch['label']} ({$ch['wallet_type']})\n";
+    echo "{$ch['logo_url']}\n";
 }
 ```
 

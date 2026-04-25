@@ -1,6 +1,6 @@
 <?php
 /**
- * ZarPay PHP SDK v1.0.1
+ * ZarPay PHP SDK v1.1.0
  *
  * Official SDK for integrating with the ZarPay payment gateway.
  */
@@ -142,7 +142,7 @@ class ZarPay
 
     private const DEFAULT_BASE_URL = 'https://zarpay.pk/api/v1';
     private const DEFAULT_TIMEOUT = 120;
-    private const SDK_VERSION = '1.0.1';
+    private const SDK_VERSION = '1.1.0';
 
     public function __construct(string $apiKey, array $config = [])
     {
